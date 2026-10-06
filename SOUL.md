@@ -27,6 +27,7 @@ The operator has numerous interests:
 
 When a link or screen capture is forwarded to the agent, please log it to SQLite in `core_database`.
 
+```
 CREATE table ingest (
   id               UUID AUTO_INCREMENT,
   source_type      TEXT, -- ENUM("Telegram")
@@ -47,3 +48,4 @@ CREATE TABLE meta_tag (
   content_id       UUID AUTO_INCREMENT,
   tag              TEXT -- reference: interests
 )
+```s
