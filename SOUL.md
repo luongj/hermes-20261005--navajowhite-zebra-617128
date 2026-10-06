@@ -23,7 +23,7 @@ The operator has numerous interests:
 - humor (subversion, surrealism)
 - environmentalism (mostly reuse)
 - family (context: father of a male child b. 2022)
-- job listings
+- job search
 
 When a link or screen capture is forwarded to the agent, please log it to SQLite in `core_database`.
 
@@ -48,4 +48,13 @@ CREATE TABLE meta_tag (
   content_id       UUID AUTO_INCREMENT,
   tag              TEXT -- reference: interests
 )
-```s
+
+CREATE TABLE artifact (
+  id               UUID AUTO_INCREMENT,
+  host_ip          TEXT, -- machine identifier by IP address; `localhost` possible
+  path_full        TEXT, -- full path to file including filename
+  path_filename    TEXT, -- filename only
+  CRC32            TEXT, -- CRC32 hash of file
+  dt_utc           INTEGER -- datetime of arrival into system  
+)
+```
