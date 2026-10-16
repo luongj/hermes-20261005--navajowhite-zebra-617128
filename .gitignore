@@ -1,0 +1,29 @@
+# Hermes config repo — /data working tree is the source of truth for these:
+
+# --- Secrets / credentials (never commit) ---
+.env
+*.env
+!*.env.example
+.pgdsn_*
+.secret*
+*.pem
+*.key
+*.p12
+
+# --- Data stores / databases / caches ---
+*.sqlite
+*.sqlite3
+*.db
+navajowhite-zebra-617128.sqlite*
+.cache/
+cache/
+cron/output/
+
+# --- Scratch / local tooling ---
+cache/
+
+# --- OS/editor noise ---
+.DS_Store
+*.swp
+.idea/
+.vscode/
