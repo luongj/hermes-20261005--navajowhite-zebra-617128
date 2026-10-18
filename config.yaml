@@ -65,4 +65,5 @@ command_allowlist:
   - execute_code
   - overwrite project env/config file
   - recursive delete
+  - script execution via -e/-c flag
   - script execution via heredoc

@@ -37,12 +37,22 @@ CREATE INDEX IF NOT EXISTS meta_tag_tag_idx   ON meta_tag(tag);
 
 CREATE TABLE IF NOT EXISTS artifact (
   id            TEXT PRIMARY KEY,            -- uuid4 hex
-  host_ip       TEXT,
-  path_full     TEXT,
-  path_filename TEXT,
-  CRC32         TEXT,
+  content_id    TEXT,                        -- ties binary to the content pool (logical; no FK)
+  storage_kind  TEXT NOT NULL CHECK (storage_kind IN ('local','s3')),
+  object_key    TEXT,                        -- '{year}/{filename}' primary locator
+  bucket        TEXT,
+  region        TEXT,
+  path_full     TEXT,                        -- local absolute path (local mode)
+  path_filename TEXT NOT NULL,
+  mime_type     TEXT,
+  byte_size     BIGINT,
+  crc32         TEXT,
+  sha256        TEXT,
   dt_utc        BIGINT
 );
+CREATE INDEX IF NOT EXISTS artifact_content_idx ON artifact(content_id);
+CREATE INDEX IF NOT EXISTS artifact_key_idx ON artifact(object_key);
+-- Full artifact feature (local disk + Neon S3 upload, SQLite variant, scripts): see `artifact-ingest` skill.
 
 CREATE TABLE IF NOT EXISTS entity (
   id                TEXT PRIMARY KEY,        -- uuid4 hex

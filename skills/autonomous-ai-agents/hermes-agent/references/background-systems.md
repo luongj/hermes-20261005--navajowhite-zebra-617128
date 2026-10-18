@@ -29,8 +29,14 @@ Durable scheduler — `cron/jobs.py` + `cron/scheduler.py`. Drive it via
 the `cronjob` tool, the `hermes cron` CLI (`list`, `add`, `edit`,
 `pause`, `resume`, `run`, `remove`), or the `/cron` slash command.
 
-- **Schedules:** duration (`"30m"`, `"2h"`), "every" phrase
-  (`"every monday 9am"`), 5-field cron (`"0 9 * * *"`), or ISO timestamp.
+- **Schedules:** duration ("30m", "2h", "14d"), "every" phrase
+  ("every monday 9am", "every day at 9am"), 5-field cron ("0 9 * * *"),
+  or ISO timestamp.
+- **Pitfall — calendar-day intervals:** the "every" phrase form takes a
+  day-of-week ("every monday 9am") or "every day", but rejects "every N days
+  at TIME" (e.g. `every 14 days at 9am` → "Invalid duration"). For an
+  N-day cadence use a bare duration (`14d` = every 14 days) or cron syntax
+  (`0 9 */14 * *`), not natural phrasing.
 - **Per-job knobs:** `skills`, `model`/`provider` override, `script`
   (pre-run data collection; `no_agent=True` makes the script the whole
   job), `context_from` (chain job A's output into job B), `workdir`

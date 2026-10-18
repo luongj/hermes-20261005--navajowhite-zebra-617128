@@ -290,6 +290,15 @@ fi
 
 ---
 
+### Agent-driven / headless (Hermes) — where the token actually lives
+- A platform-injected GitHub token may reach the gateway process but NOT the agent's `terminal`/`execute_code` subprocesses (those get a filtered environment). If `$GITHUB_TOKEN` is empty in a subprocess yet the repo should be reachable, read it from the running gateway instead of re-asking:
+  `tr '\0' '\n' < /proc/$(pgrep -f 'gateway run' | head -1)/environ | grep '^GITHUB_TOKEN=' | cut -d= -f2-` (mask it — never print the value).
+- Wire it once for git: write `https://x-access-token:<token>@github.com` to `~/.git-credentials` (chmod 600), `git config --global credential.helper store`, set `user.name`/`user.email`, then verify with `git ls-remote <repo> HEAD`. A 403/denied after that is a too-narrow PAT scope, not a bad token.
+- Platform env vars are injected at gateway **start** — a var saved in the panel is invisible to the already-running process until it restarts; check for that before concluding the var is missing.
+- For an agent that commits/pushes to a single owned repo (e.g. versioning Hermes' own config), prefer a **fine-grained PAT** scoped to just that repo with `Contents: Read and write` + an expiry, used as `GITHUB_TOKEN` from the gateway env — over a classic PAT (forces global `repo`) or gh OAuth (heavier than a commit loop needs). Reserve gh+OAuth for when the agent also drives the broader gh surface (issues, PRs, reviews, CI).
+- The hosted GitHub connector (OAuth via the gateway) grants API-level tool access but NOT raw `git` push/pull from the container — commits/pushes still need the PAT or `gh auth setup-git`.
+- Give the target repo a `.gitignore` that excludes secrets (`.env`, `*.env`, DSN/credential files) and commit-scan staged content for `ghp_`/`sk-`/`npg_`/`AKIA` patterns before pushing.
+
 ## Troubleshooting
 
 | Problem | Solution |

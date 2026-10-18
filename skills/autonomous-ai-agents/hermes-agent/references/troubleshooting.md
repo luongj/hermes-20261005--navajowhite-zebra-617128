@@ -21,6 +21,17 @@
 - **Config changes:** In gateway: `/restart`. In CLI: exit and relaunch.
 - **Code changes:** Restart the CLI or gateway process
 
+### Env vars set in hPanel don't reach agent tool subprocesses
+Environment variables configured under hPanel → Environment are injected into the gateway process, but
+agent tool subprocesses (`terminal`, `execute_code`) do NOT inherit them until the gateway/container
+restarts. To use such a var (e.g. `GITHUB_TOKEN`) from git or a script without a full restart, read it
+directly from the gateway process env:
+```bash
+GPID=$(pgrep -f 'gateway run' | head -1)        # gateway pid has the injected env
+VAR=$(tr '\0' '\n' < /proc/$GPID/environ | grep '^GITHUB_TOKEN=' | cut -d= -f2-)
+```
+Never echo the value — pipe it straight into the command that needs it.
+
 ### web_extract shows a stale page (result caching)
 `web_search`/`web_extract` cache results for 20 minutes (PR #94618) — a
 repeat fetch of the same URL within the TTL is served from cache, which

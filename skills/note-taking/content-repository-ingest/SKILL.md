@@ -6,6 +6,8 @@ description: Log forwarded jobs/links into the content repository DB.
 
 Store a forwarded job listing, link, URL, or screen capture into the content repository
 (referenced by SOUL.md as `core_database`). Store only — do not launch into analysis unless the user asks.
+Confirm tersely (what was stored + its tags); do not analyze, editorialize, or add commentary to any
+item (links, anecdotes, images alike) unless asked.
 
 ## The repository
 - Postgres `permathink` on Neon (project `hermes-edwards`, default branch `production`). Deployed 2026-10-15.
@@ -43,6 +45,9 @@ Note (context, not a rule): `prospect-coldfusion` tags .cfm/ColdFusion sites as 
 user's AI-driven ColdFusion migration/maintenance consulting engagements — record the page, its
 CF surface (cart/login/index pages), and any migration-relevant signals.
 
+Binaries (video/image/PDF) that accompany or are forwarded for storage use the `artifact-ingest`
+skill (local disk + SQLite, or Neon S3 + permathink) and tie to this same content pool.
+
 Ids are `uuid4().hex` (32-char, no dashes) stored as TEXT — a Postgres `uuid` type would reject them.
 `dt_utc` is a BIGINT unix epoch (not timestamptz) for exact round-trips.
 
@@ -67,14 +72,23 @@ Apply tags from `meta_tag_standard` only (DB enforces this). Rules:
 6. Verify after commit: count rows back from each affected table (read-back, not assumption).
 
 ## Pitfalls
-- On untagged anecdotes/quotes, confirm storage in one line and add no reflective/interpretive
-  commentary — the operator wants ingest confirmations free of editorializing.
+- De-duplicate forwarded URLs that are the same page — fragment/anchor or UTM variants (e.g.
+  `westie.fyi/?ch=x` vs `westie.fyi/?ch=x#cities`) — store the canonical once and note the variant.
 - LinkedIn job pages carry ~32k chars of chrome/nav; extract the clean listing and store that, not raw HTML.
 - Tag keys map to `meta_tag_standard`, not the free-form SOUL.md interest list.
 - There are NO foreign keys in `permathink` — referential integrity is application-managed. Only the
   charset CHECK on `meta_tag.tag` and the `entity.entity_type` CHECK are DB-level guarantees.
 - `id` columns are TEXT (uuid4 hex, no dashes); `dt_utc` is BIGINT unix epoch — do not cast to uuid/timestamptz.
 - `entity.aliases`/`properties` are JSONB — pass valid JSON or NULL.
+- Repo scripts that write Postgres need `psycopg` — run them with `/data/cache/scratch/migvenv/bin/python`,
+  not the system `python3` (no psycopg); a `neon`-mode run fails at `import psycopg` before any upload.
+- `entity.name` is NOT unique and the ingest script mints a new id per `--entity` — resolve existing
+  canonical entities by name (`SELECT id FROM entity WHERE name=...`) and reuse the id instead of
+  re-minting, or duplicate canonical entities accumulate.
+- Bulk loads (migration, backfill, many rows): use the parameterized `ingest_to_permathink.py`
+  (psycopg) rather than pasting INSERT literals through the Neon MCP — the data stays out of model
+  context (cheap) and you avoid SQL-escaping bugs on content with quotes/newlines/emoji. Reserve MCP
+  `run_sql` for small one-row DDL/writes.
 
 ## Two-level proper-noun metadata engine (applied)
 Live in `permathink`: a content-bound surface-instance layer (`content_entity`) linked via `entity_id` to a
@@ -84,4 +98,5 @@ canonical registry (`entity`) with a slow-growing closed enum
 `references/metadata-engine.md`; DDL: `references/schema.sql`.
 Retroactive tag of pre-existing content is done (carried into permathink 2026-10-15). Keep tagging entities
 on every new ingest: look up the entity by NAME first and reuse the existing canonical id; only mint a new
-`entity` row when the name is genuinely new (key on an insert-or-ignore/unique constraint so re-runs don't duplicate).
+`entity` row when the name is genuinely new. There is no `UNIQUE(name)` in permathink — dedupe in the
+ingest step (`SELECT id FROM entity WHERE name=...`), not via a DB constraint.
