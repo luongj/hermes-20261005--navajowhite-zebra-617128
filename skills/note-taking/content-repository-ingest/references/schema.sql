@@ -80,6 +80,6 @@ CREATE TABLE IF NOT EXISTS content_entity (
 CREATE INDEX IF NOT EXISTS content_entity_content_idx ON content_entity(content_id);
 CREATE INDEX IF NOT EXISTS content_entity_entity_idx  ON content_entity(entity_id);
 
--- Canonical tag set (19): ai-inference, ai-society, architecture, buy-apparel, non-retail, travel,
--- open-source, tech, tech-infra, business, economics, humor, sustainability, family, job-listing,
+-- Canonical tag set (21): ai-inference, ai-society, architecture, buy-apparel, buy-tech, buy, non-retail,
+-- travel, open-source, tech, tech-infra, business, economics, humor, sustainability, family, job-listing,
 -- job-consult-prospect, prospect-coldfusion, watchlist, untagged (seeded in meta_tag_standard).

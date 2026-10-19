@@ -32,8 +32,9 @@ item (links, anecdotes, images alike) unless asked.
 Canonical tags: `ai-inference`, `ai-society`, `architecture`, `buy-apparel`, `non-retail`,
 `travel`, `open-source`, `tech`, `tech-infra`, `business`, `economics`, `humor`,
 `sustainability`, `family`, `job-listing`, `job-consult-prospect`, `prospect-coldfusion`,
-`watchlist`, `untagged`. Use `watchlist` for books/TV/movies the operator intends to watch,
-`job-listing` for job postings, `job-consult-prospect` for pre-sales/consulting
+`watchlist`, `buy-tech`, `buy`, `untagged`. Use `watchlist` for books/TV/movies the operator intends to
+watch, `buy-tech` for technology products considered for purchase, `buy` for miscellaneous items
+considered for purchase, `job-listing` for job postings, `job-consult-prospect` for pre-sales/consulting
 leads, `buy-apparel` for apparel/merch items considered for purchase, `prospect-coldfusion` for
 prospects/leads running ColdFusion (.cfm), `architecture` for built-environment design,
 `non-retail` for maker/secondary-marketplace transactions, `ai-inference` for model
@@ -74,6 +75,8 @@ Apply tags from `meta_tag_standard` only (DB enforces this). Rules:
 ## Pitfalls
 - De-duplicate forwarded URLs that are the same page — fragment/anchor or UTM variants (e.g.
   `westie.fyi/?ch=x` vs `westie.fyi/?ch=x#cities`) — store the canonical once and note the variant.
+- At the end of an ingestion session, do NOT give a total recap (counts/summary) unless asked — just
+  confirm each item was stored.
 - LinkedIn job pages carry ~32k chars of chrome/nav; extract the clean listing and store that, not raw HTML.
 - Tag keys map to `meta_tag_standard`, not the free-form SOUL.md interest list.
 - There are NO foreign keys in `permathink` — referential integrity is application-managed. Only the
