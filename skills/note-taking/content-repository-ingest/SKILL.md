@@ -32,9 +32,10 @@ item (links, anecdotes, images alike) unless asked.
 Canonical tags: `ai-inference`, `ai-society`, `architecture`, `buy-apparel`, `non-retail`,
 `travel`, `open-source`, `tech`, `tech-infra`, `business`, `economics`, `humor`,
 `sustainability`, `family`, `job-listing`, `job-consult-prospect`, `prospect-coldfusion`,
-`watchlist`, `buy-tech`, `buy`, `untagged`. Use `watchlist` for books/TV/movies the operator intends to
-watch, `buy-tech` for technology products considered for purchase, `buy` for miscellaneous items
-considered for purchase, `job-listing` for job postings, `job-consult-prospect` for pre-sales/consulting
+`watchlist`, `buy-tech`, `buy`, `us-nc-triangle`, `untagged`. Use `watchlist` for books/TV/movies the
+operator intends to watch, `buy-tech` for technology products considered for purchase, `buy` for
+miscellaneous items considered for purchase, `us-nc-triangle` for people/places/things around NC's
+Research Triangle (Raleigh-Durham-Chapel Hill), `job-listing` for job postings, `job-consult-prospect` for pre-sales/consulting
 leads, `buy-apparel` for apparel/merch items considered for purchase, `prospect-coldfusion` for
 prospects/leads running ColdFusion (.cfm), `architecture` for built-environment design,
 `non-retail` for maker/secondary-marketplace transactions, `ai-inference` for model
@@ -85,9 +86,19 @@ Apply tags from `meta_tag_standard` only (DB enforces this). Rules:
 - `entity.aliases`/`properties` are JSONB — pass valid JSON or NULL.
 - Repo scripts that write Postgres need `psycopg` — run them with `/data/cache/scratch/migvenv/bin/python`,
   not the system `python3` (no psycopg); a `neon`-mode run fails at `import psycopg` before any upload.
+- `migvenv` and `.pgdsn_permathink` live under `/data/cache/scratch/`, which is PRUNED when idle >24h —
+  they can disappear mid-session (symptom: `migvenv/bin/python: No such file or directory`). Rebuild with
+  `uv pip install --python /data/cache/scratch/migvenv/bin/python "psycopg[binary]"` and re-fetch the DSN
+  via Neon MCP `get_connection_string(database_name='permathink')`, writing it back to
+  `.pgdsn_permathink` (chmod 600). The skill scripts under `/data/skills/` are NOT pruned — they survive.
 - `entity.name` is NOT unique and the ingest script mints a new id per `--entity` — resolve existing
   canonical entities by name (`SELECT id FROM entity WHERE name=...`) and reuse the id instead of
   re-minting, or duplicate canonical entities accumulate.
+- The Neon pooler connection is intermittently slow/flaky — a `psycopg.connect` can hang or die with
+  'Network is unreachable' / 'connection timeout expired'. A failed connect commits nothing, so RETRY when
+  a one-item run times out. For a MULTI-item batch that times out mid-way, some items may have committed:
+  key off the script's per-item `ingested <id>` line and re-run only the missing ones — never blindly
+  re-run the whole batch (duplicates) nor assume none landed.
 - Bulk loads (migration, backfill, many rows): use the parameterized `ingest_to_permathink.py`
   (psycopg) rather than pasting INSERT literals through the Neon MCP — the data stays out of model
   context (cheap) and you avoid SQL-escaping bugs on content with quotes/newlines/emoji. Reserve MCP

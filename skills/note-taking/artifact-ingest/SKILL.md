@@ -61,3 +61,8 @@ Verify read-back counts after commit (the script prints them).
 - `object_key` must use the year to satisfy the `{year}/...` folder convention.
 - Keep the canonical `permathink` Postgres repo as the live store; the local SQLite repo is the disk-only
   context.
+- A `neon` upload that times out/errors may have completed the object PUT but stalled before the `artifact`
+  row insert — the two are separate network steps and the pooler is flaky. After any failed/timed-out neon
+  run, verify BOTH the bucket object (`list_storage_objects`, prefix `{year}/`) AND the `artifact` row; if
+  the object is present but the row is missing, insert the row yourself (compute sha256/crc32 from the
+  source file) rather than re-uploading the bytes.
